@@ -1,35 +1,55 @@
-🧠 Week-01-Flush-Reload-Attack
+# 🧠 Week-01 — Flush+Reload Cache Side-Channel Attack
 
-A practical demonstration of the Flush+Reload cache side-channel attack using a simplified setup inspired by the Mastik micro-architectural attack toolkit.
-This repository focuses on educational clarity, especially through separate Victim and Attacker programs.
+A practical demonstration of the **Flush+Reload cache side-channel attack** using a simplified setup inspired by the **Mastik micro-architectural attack toolkit**.
 
-🧩 Background Theory — Flush+Reload Attack
-Flush+Reload is a cache-timing side-channel attack based on:
+This repository have **separate Victim and Attacker programs** to clearly demonstrate real-world two-process attack behavior.
 
-🔹 Key Idea
-If two processes share memory:
-1.Victim accesses a memory line → it goes into cache
-2.Attacker flushes and reloads the same line
-3.Fast reload ⇒ Victim accessed it
-4.Slow reload ⇒ Victim did not access it
+---
 
-Thus, attacker learns victim’s memory access behavior, which can leak:
-1.Secret keys
-2.Conditional branches
-3.Cryptographic table lookups
+## 📌 Background Theory — Flush+Reload Attack
 
-🏗 System Requirements
+Flush+Reload is a **cache-timing side-channel attack** based on shared memory and cache access latency.
 
-1.Linux (recommended: Ubuntu)
-2.x86 CPU with:
-3.clflush instruction support
-4.High-resolution timer (RDTSC)
-5.GCC compiler
-6.Mastik library (or compatible headers)
+### 🔹 Key Idea
 
-⚠️ Note: Running inside VirtualBox or VM may reduce accuracy due to noisy timing.
+If two processes share a memory line:
 
-📁 Repository Structure
+1. Victim accesses a memory line → it is loaded into cache
+2. Attacker flushes and reloads the same line
+3. **Fast reload ⇒ Victim accessed it (Cache HIT)**
+4. **Slow reload ⇒ Victim did not access it (Cache MISS)**
+
+Thus, the attacker can infer the victim’s memory access behavior, which may leak:
+
+* 🔐 Secret keys
+* 🌿 Conditional branches
+* 📊 Cryptographic table lookups
+
+This attack is especially effective against implementations of:
+
+* AES (lookup tables)
+* RSA (secret-dependent memory access)
+* Branch-based secret logic
+
+---
+
+## 🏗 System Requirements
+
+* Linux (Recommended: **Ubuntu**)
+* x86 CPU with:
+
+  * `clflush` instruction support
+  * High-resolution timer (`RDTSC`)
+* GCC Compiler
+* (Optional) Mastik library or compatible headers
+
+⚠️ **Note:** Running inside **VirtualBox or other VMs may reduce accuracy** due to noisy timing and lack of precise cache control. Bare-metal execution is recommended for best results.
+
+---
+
+## 📁 Repository Structure
+
+```
 Week-01-Flush-Reload-Attack/
 │
 ├── demo/
@@ -40,78 +60,149 @@ Week-01-Flush-Reload-Attack/
 ├── Makefile
 ├── LICENSE
 └── README.md
+```
 
-🔧 Changes Compared to Original Mastik Repository
-The original Mastik toolkit provides generic APIs and many attack types.
-✅ Modifications in This Repository
-The demo/ folder was modified to include:
+---
+
+## 🔧 Changes Compared to Original Mastik Repository
+
+The original **Mastik toolkit** provides:
+
+* Generic APIs
+* Multiple cache attack techniques
+* Complex experimental setup
+
+### ✅ Modifications in This Repository
+
+Only the **demo/** folder is modified to include:
+
+```
 demo/
 ├── attacker.c
 └── victim.c
+```
 
-✔ Purpose of These Changes
-1.Clear separation of Victim and Attacker
-2.Realistic two-process attack model
-3.Easier understanding of attack workflow
-4.Suitable for academic demonstrations
+### ✔ Purpose of These Changes
 
-🧪 Program Explanation
-🟢 victim.c — Victim Program
+* Clear separation of **Victim and Attacker**
+* Realistic **two-process attack model**
+* Easier understanding of attack workflow
+* Suitable for:
 
-Simulates a normal application that:
-1.Repeatedly accesses a fixed memory location
-2.Brings cache line into cache
-3.Has no knowledge of attack
+  * Academic demonstrations
+  * Internships
+  * Security research learning
 
-Victim Behavior
-1.Loads shared memory
-2.Enters infinite loop
-3.Continuously reads target address
+---
 
-This models secret-dependent memory access as seen in:
-1.AES table lookups
-2.RSA exponentiation
-3.Branch-based secrets
+## 🧪 Program Explanation
 
-🔴 attacker.c — Attacker Program
+### 🟢 `victim.c` — Victim Program
 
-Implements Flush+Reload:
+Simulates a normal application that unknowingly leaks information through cache usage.
 
-Steps
-1.Flush cache line using clflush
-2.Wait briefly
-3.Reload memory
-4.Measure access time
-5.Compare with threshold
-6.Decide HIT or MISS
+#### Victim Behavior
 
-▶️ How to Compile and Run
-Step 1: Go to Demo Folder
+1. Loads shared memory
+2. Enters an infinite loop
+3. Continuously reads a target address
+
+This brings the cache line into cache repeatedly.
+
+#### Models Real-World Scenarios Like:
+
+* AES table lookups
+* RSA exponentiation
+* Secret-dependent branching
+
+The victim **has no knowledge of the attacker**.
+
+---
+
+### 🔴 `attacker.c` — Attacker Program
+
+Implements the full **Flush+Reload attack cycle**.
+
+#### Attack Steps
+
+1. Flush cache line using `clflush`
+2. Wait briefly
+3. Reload memory
+4. Measure access time using `RDTSC`
+5. Compare with timing threshold
+6. Decide **HIT or MISS**
+
+#### Interpretation
+
+* **HIT → Victim accessed the memory**
+* **MISS → Victim did not access the memory**
+
+Over time, this reveals the victim’s access pattern.
+
+---
+
+## ▶️ How to Compile and Run
+
+### Step 1: Go to Demo Folder
+
+```bash
 cd demo
+```
 
-Step 2: Compile Victim
+---
+
+### Step 2: Compile Victim
+
+```bash
 gcc victim.c -o victim
+```
 
-Step 3: Compile Attacker
-(If using Mastik library)
-gcc attacker.c -o attacker -lmastik -lpthread
+---
 
-(or basic version)
+### Step 3: Compile Attacker
+
+#### Basic Version (No Mastik API)
+
+```bash
 gcc attacker.c -o attacker
+```
 
+#### If Using Mastik Library
 
-▶️ Running the Attack
-Open two terminals.
-🟢 Terminal 1 — Run Victim
+```bash
+gcc attacker.c -o attacker -lmastik -lpthread
+```
+
+(Ensure Mastik is correctly installed and linked.)
+
+---
+
+## ▶️ Running the Attack
+
+Open **two terminals**.
+
+### 🟢 Terminal 1 — Run Victim
+
+```bash
 ./victim
+```
+
 Victim will continuously access memory.
 
-🔴 Terminal 2 — Run Attacker
-./attacker
+---
 
-You will see output like:
-HIT   85 cycles
+### 🔴 Terminal 2 — Run Attacker
+
+```bash
+./attacker
+```
+
+You should observe output similar to:
+
+```
+HIT   80 cycles
 MISS  320 cycles
-HIT   90 cycles
-HIT   88 cycles
-MISS  310 cycles
+HIT   75 cycles
+```
+
+This indicates detection of victim memory accesses.
