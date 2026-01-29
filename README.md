@@ -208,60 +208,80 @@ HIT   75 cycles
 This indicates detection of victim memory accesses.
 
 
-🧠 Prime + Probe Cache Side-Channel Attack (Using Mastik Toolkit)
-📌 Overview
+# 🧠 Prime + Probe Cache Side-Channel Attack (Using Mastik Toolkit)
 
-This project demonstrates the Prime + Probe cache side-channel attack using the Mastik (Micro-Architectural Side-Channel Toolkit) on Linux (Ubuntu).
+## 📌 Overview
 
-Prime+Probe is a cache timing attack where:
+This project demonstrates the **Prime + Probe cache side-channel attack** using the  
+**Mastik (Micro-Architectural Side-Channel Toolkit)** on **Linux (Ubuntu)**.
 
-The attacker primes (fills) specific cache sets.
+Prime + Probe is a cache timing attack where:
 
-The victim executes and may evict some cache lines.
+1. The attacker **primes** (fills) specific cache sets.
+2. The victim executes and may **evict** some cache lines.
+3. The attacker **probes** the same cache sets and measures access time.
+4. Higher access time ⇒ victim accessed that cache set.
 
-The attacker probes the same cache sets and measures access time.
+---
 
-Higher access time ⇒ victim accessed that cache set.
+## 📁 Project Structure
 
-PrimeProbeProject/
-│
-├── Mastik/                 # Mastik toolkit folder
+Mastik/
 │
 ├── demo/
-│   ├── pp_attacker.c       # Attacker code
-│   ├── pp_victim.c         # Victim code
+│ ├── pp_attacker.c # Attacker code
+│ ├── pp_victim.c # Victim code
 │
 └── README.md
 
-🔧 Step 1: Install Dependencies
+
+---
+
+## 🔧 Step 1: Install Dependencies
 
 Open terminal and run:
+
+```bash
 sudo apt update
 sudo apt install build-essential git make msr-tools -y
+Load MSR kernel module:
 
-Load MSR module:
 sudo modprobe msr
+⚠️ MSR access is required for precise timing measurements in cache attacks.
+
+🛠 Step 2: Build Mastik Toolkit
+From the Mastik root directory:
+
+make clean
+make
+This will generate:
+
+src/libmastik.a
+which is required for compiling the attacker program.
 
 🧾 Step 3: Compile Victim Program
-
 Go to demo folder:
+
 cd demo
-gcc PP_VICTIM.c -O0 -o pp_victim
+Compile victim:
+
+gcc pp_victim.c -O0 -o pp_victim
 
 🧾 Step 4: Compile Attacker Program
-cd demo
-gcc PP_ATTACKER.c -o pp_attacker \
+From the same demo folder:
+
+gcc pp_attacker.c -o pp_attacker \
 -I.. -I../mastik -I../src \
 ../src/libmastik.a -lpthread
 
 ▶️ Step 5: Run Victim
-
 Open Terminal 1:
+
 cd demo
 sudo taskset -c 0 ./pp_victim
 
 ▶️ Step 6: Run Attacker
-
 Open Terminal 2:
+
 cd demo
 sudo taskset -c 0 ./pp_attacker
