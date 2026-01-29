@@ -206,3 +206,62 @@ HIT   75 cycles
 ```
 
 This indicates detection of victim memory accesses.
+
+
+🧠 Prime + Probe Cache Side-Channel Attack (Using Mastik Toolkit)
+📌 Overview
+
+This project demonstrates the Prime + Probe cache side-channel attack using the Mastik (Micro-Architectural Side-Channel Toolkit) on Linux (Ubuntu).
+
+Prime+Probe is a cache timing attack where:
+
+The attacker primes (fills) specific cache sets.
+
+The victim executes and may evict some cache lines.
+
+The attacker probes the same cache sets and measures access time.
+
+Higher access time ⇒ victim accessed that cache set.
+
+PrimeProbeProject/
+│
+├── Mastik/                 # Mastik toolkit folder
+│
+├── demo/
+│   ├── pp_attacker.c       # Attacker code
+│   ├── pp_victim.c         # Victim code
+│
+└── README.md
+
+🔧 Step 1: Install Dependencies
+
+Open terminal and run:
+sudo apt update
+sudo apt install build-essential git make msr-tools -y
+
+Load MSR module:
+sudo modprobe msr
+
+🧾 Step 3: Compile Victim Program
+
+Go to demo folder:
+cd demo
+gcc PP_VICTIM.c -O0 -o pp_victim
+
+🧾 Step 4: Compile Attacker Program
+cd demo
+gcc PP_ATTACKER.c -o pp_attacker \
+-I.. -I../mastik -I../src \
+../src/libmastik.a -lpthread
+
+▶️ Step 5: Run Victim
+
+Open Terminal 1:
+cd demo
+sudo taskset -c 0 ./pp_victim
+
+▶️ Step 6: Run Attacker
+
+Open Terminal 2:
+cd demo
+sudo taskset -c 0 ./pp_attacker
